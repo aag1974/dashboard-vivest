@@ -2587,12 +2587,27 @@ def render_html_with_working_filters(file_source: str, created_at: str, client_n
     value_orders_js = json.dumps(value_orders, ensure_ascii=False)
     code_to_label_js = json.dumps(code_to_label, ensure_ascii=False)
 
+    # Formatação de data para nome do arquivo
+    from datetime import datetime
+    try:
+        # Tentar extrair data de created_at ou usar data atual
+        data_formatada = datetime.now().strftime("%d-%m-%Y")
+        if created_at:
+            # Se created_at tem formato específico, tentar parseá-lo
+            data_formatada = datetime.now().strftime("%d-%m-%Y")
+    except:
+        data_formatada = datetime.now().strftime("%d-%m-%Y")
+    
+    # Nome base do arquivo sem extensão
+    nome_arquivo = file_source.replace('.sav', '').replace('.SAV', '')
+    titulo_pdf = f"Relatorio de resultados_{nome_arquivo}_{data_formatada}"
+    
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard SPSS Universal</title>
+    <title>{titulo_pdf}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -4092,18 +4107,18 @@ def render_html_with_working_filters(file_source: str, created_at: str, client_n
                     }}
                     
                     // Limpar caracteres proibidos pelo Excel
-                    combinedTitle = combinedTitle.replace(/[:\\\\/\\?\\*\\[\\]]/g, "");
+                    combinedTitle = combinedTitle.replace(/[:\\/\\*\\[\\]\\?]/g, "");
                     
                     // Limitar a 31 caracteres (limite do Excel)
                     if (combinedTitle.length > 31) {{
                         // Tentar formato mais compacto: "P1-Título"
-                        const compactTitle = `${{varName}}-${{title.replace(/[:\\\\/\\?\\*\\[\\]\\s]/g, "")}}`;
+                        const compactTitle = `${{varName}}-${{title.replace(/[:\\/\\*\\[\\]\\?\\s]/g, "")}}`;
                         if (compactTitle.length <= 31) {{
                             sheetName = compactTitle;
                         }} else {{
                             // Cortar título mas manter variável
                             const maxTitleLength = 31 - varName.length - 1; // -1 para o hífen
-                            const truncatedTitle = title.replace(/[:\\\\/\\?\\*\\[\\]]/g, "").substring(0, maxTitleLength);
+                            const truncatedTitle = title.replace(/[:\\/\\*\\[\\]\\?]/g, "").substring(0, maxTitleLength);
                             sheetName = `${{varName}}-${{truncatedTitle}}`;
                         }}
                     }} else {{
@@ -4111,7 +4126,7 @@ def render_html_with_working_filters(file_source: str, created_at: str, client_n
                     }}
                 }} else {{
                     // Fallback: usar índice numérico
-                    let safeName = title.replace(/[:\\\\/\\?\\*\\[\\]]/g, "");
+                    let safeName = title.replace(/[:\\/\\*\\[\\]\\?]/g, "");
                     safeName = safeName.replace(/\\s+/g, ' ').trim();
                     
                     // Adicionar número da seção
@@ -4243,36 +4258,29 @@ def render_html_with_working_filters(file_source: str, created_at: str, client_n
             const header = document.createElement('div');
             header.style.cssText = `
                 background: white;
-                padding: 20px;
-                border-bottom: 3px solid #4A90E2;
-                margin-bottom: 20px;
+                padding: 0;
+                margin: 0;
                 font-family: Arial, sans-serif;
                 page-break-after: always;
+                height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             `;
             
             header.innerHTML = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h1 style="color: #4A90E2; font-size: 24px; margin: 0;">📋 DASHBOARD DE ANÁLISE - PESQUISA SPSS</h1>
-                    <div style="border: 2px solid #4A90E2; margin: 10px 0;"></div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 16px;">
-                    <div>
-                        <p style="margin: 5px 0;"><strong>📂 Arquivo:</strong> {file_source}</p>
-                        <p style="margin: 5px 0;"><strong>📅 Gerado em:</strong> ${{dateStr}}</p>
-                    </div>
-                    <div>
-                        <p style="margin: 5px 0;"><strong>👥 Respondentes:</strong> ${{formatNumberBR(totalRecords)}}</p>
-                        <p style="margin: 5px 0;"><strong>📊 Variáveis analisadas:</strong> ${{formatNumberBR(totalVars)}}</p>
+                <div style="text-align: center; width: 100%;">
+                    <h1 style="color: #4A90E2; font-size: 32px; margin-bottom: 30px;">📋 RELATÓRIO DE RESULTADOS</h1>
+                    
+                    <div style="font-size: 18px; line-height: 1.8; max-width: 600px; margin: 0 auto;">
+                        <p style="margin: 15px 0;"><strong>📂 Arquivo:</strong> {file_source}</p>
+                        <p style="margin: 15px 0;"><strong>📅 Gerado em:</strong> ${{dateStr}}</p>
+                        <p style="margin: 15px 0;"><strong>📅 Período de coleta:</strong> Calculado automaticamente</p>
+                        <p style="margin: 15px 0;"><strong>👥 Respondentes:</strong> ${{formatNumberBR(totalRecords)}}</p>
+                        <p style="margin: 15px 0;"><strong>📊 Variáveis analisadas:</strong> ${{formatNumberBR(totalVars)}}</p>
+                        <p style="margin: 15px 0;"><strong>🔍 Filtros aplicados:</strong> ${{activeFilters.join(', ') || 'Nenhum filtro aplicado'}}</p>
                     </div>
                 </div>
-                
-                <div style="margin-top: 15px;">
-                    <p style="margin: 5px 0; font-weight: bold;">🔍 Filtros aplicados:</p>
-                    ${{activeFilters.map(filter => `<p style="margin: 2px 0 2px 20px;">• ${{filter}}</p>`).join('')}}
-                </div>
-                
-                <div style="border: 2px solid #4A90E2; margin: 20px 0 10px 0;"></div>
             `;
             
             return header;
@@ -4307,13 +4315,15 @@ def render_html_with_working_filters(file_source: str, created_at: str, client_n
                 headerDiv.className = 'pdf-header-temp';
                 headerDiv.style.cssText = `
                     background: white;
-                    padding: 20px;
-                    border-bottom: 3px solid #4A90E2;
-                    margin-bottom: 20px;
+                    padding: 0;
+                    margin: 0;
                     font-family: Arial, sans-serif;
                     display: none;
                     print-color-adjust: exact;
                     -webkit-print-color-adjust: exact;
+                    height: 100vh;
+                    align-items: center;
+                    justify-content: center;
                 `;
                 
                 // Informações do cabeçalho
@@ -4364,17 +4374,16 @@ def render_html_with_working_filters(file_source: str, created_at: str, client_n
                 }}
                 
                 headerDiv.innerHTML = `
-                    <h1 style="color: #4A90E2; text-align: center; margin-bottom: 20px;">📋 DASHBOARD DE ANÁLISE - PESQUISA SPSS</h1>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 14px;">
-                        <div>
-                            <div style="margin: 4px 0;"><strong>📂 Arquivo:</strong> {file_source}</div>
-                            <div style="margin: 4px 0;"><strong>📅 Gerado em:</strong> ${{dateStr}}</div>
-                            <div style="margin: 4px 0;"><strong>📅 Período de coleta:</strong> ${{periodoColeta}}</div>
-                        </div>
-                        <div>
-                            <div style="margin: 4px 0;"><strong>👥 Respondentes:</strong> ${{formatNumberBR(totalRecords)}}</div>
-                            <div style="margin: 4px 0;"><strong>📊 Variáveis analisadas:</strong> ${{formatNumberBR(totalVars)}}</div>
-                            <div style="margin: 4px 0;"><strong>🔍 Filtros aplicados:</strong> ${{activeFilters.join('; ') || 'Nenhum'}}</div>
+                    <div style="text-align: center; width: 100%;">
+                        <h1 style="color: #4A90E2; font-size: 28px; margin-bottom: 30px;">📋 RELATÓRIO DE RESULTADOS</h1>
+                        
+                        <div style="font-size: 16px; line-height: 1.8; max-width: 500px; margin: 0 auto;">
+                            <div style="margin: 12px 0;"><strong>📂 Arquivo:</strong> {file_source}</div>
+                            <div style="margin: 12px 0;"><strong>📅 Gerado em:</strong> ${{dateStr}}</div>
+                            <div style="margin: 12px 0;"><strong>📅 Período de coleta:</strong> ${{periodoColeta}}</div>
+                            <div style="margin: 12px 0;"><strong>👥 Respondentes:</strong> ${{formatNumberBR(totalRecords)}}</div>
+                            <div style="margin: 12px 0;"><strong>📊 Variáveis analisadas:</strong> ${{formatNumberBR(totalVars)}}</div>
+                            <div style="margin: 12px 0;"><strong>🔍 Filtros aplicados:</strong> ${{activeFilters.join('; ') || 'Nenhum filtro aplicado'}}</div>
                         </div>
                     </div>
                 `;
@@ -4395,15 +4404,17 @@ def render_html_with_working_filters(file_source: str, created_at: str, client_n
                         body {{ margin: 0; padding: 15mm; background: white; font-family: Arial, sans-serif; }}
                         .filters-container {{ display: none !important; }}
                         
-                        /* CABEÇALHO - Garantir que apareça */
+                        /* CABEÇALHO - Garantir que apareça centralizado */
                         .pdf-header-temp {{ 
-                            display: block !important; 
+                            display: flex !important; 
                             visibility: visible !important;
                             position: static !important;
-                            margin-bottom: 30px !important;
-                            page-break-after: avoid !important;
-                            border-bottom: 3px solid #4A90E2 !important;
-                            padding-bottom: 20px !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            page-break-after: always !important;
+                            height: 100vh !important;
+                            align-items: center !important;
+                            justify-content: center !important;
                         }}
                         
                         .section {{ margin-bottom: 20px; page-break-inside: avoid; }}
@@ -4450,8 +4461,21 @@ def render_html_with_working_filters(file_source: str, created_at: str, client_n
                 // Aguardar um momento
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
+                // Sugerir nome do arquivo PDF baseado no título
+                const originalTitle = document.title;
+                const dataAtual = new Date().toLocaleDateString('pt-BR').replace(new RegExp('/', 'g'), '-');
+                const nomeArquivoLimpo = '{file_source}'.replace('.sav', '').replace('.SAV', '');
+                const tituloPDF = `Relatorio de resultados_${{nomeArquivoLimpo}}_${{dataAtual}}`;
+                document.title = tituloPDF;
+                
                 console.log('🖨️ Abrindo diálogo de impressão...');
+                console.log('📄 Nome sugerido do arquivo:', tituloPDF);
                 window.print();
+                
+                // Restaurar título original após impressão
+                setTimeout(() => {{
+                    document.title = originalTitle;
+                }}, 2000);
                 
                 // Limpeza após 3 segundos
                 setTimeout(() => {{
