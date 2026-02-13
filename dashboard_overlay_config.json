@@ -1,0 +1,27 @@
+{
+  "title": "Dashboard Master - Header Overlay",
+  "created": "2025-11-27T09:31:04.218699",
+  "architecture": "header_overlay",
+  "description": "Sistema onde header SPSS sobrepõe interface e sidebar navega",
+  "items": [
+    {
+      "id": "pesquisa-de-satisfacao",
+      "title": "Pesquisa de Satisfação",
+      "icon": "🌐",
+      "type": "group",
+      "expanded": false,
+      "children": [
+        {
+          "id": "2025",
+          "title": "2025",
+          "file": "2025_satisfacao.html",
+          "description": "",
+          "overlay": true,
+          "added": "2026-02-13T09:28:04.373859"
+        }
+      ]
+    }
+  ],
+  "updated": "2026-02-13T09:28:29.867752",
+  "client_logo": "https://www.vivest.com.br/site/assets/img/icons/logo_novamarca.svg"
+}
